@@ -79,6 +79,38 @@ def _sse_event(event: str, data: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+def _provider_error_message(status_code: int) -> tuple[str, str]:
+    if status_code in (401, 403):
+        return (
+            "invalid_api_key",
+            "OpenRouter rejected the API key. Check the Vercel OPENROUTER_API_KEY setting, then redeploy.",
+        )
+    if status_code == 402:
+        return (
+            "insufficient_credits",
+            "The OpenRouter account has insufficient credits or billing is not enabled.",
+        )
+    if status_code == 404:
+        return (
+            "model_not_found",
+            "OpenRouter could not find that model. Choose a model ID available to your account.",
+        )
+    if status_code == 429:
+        return (
+            "rate_limited",
+            "OpenRouter rate limit reached. Wait a moment and try again.",
+        )
+    if status_code >= 500:
+        return (
+            "provider_unavailable",
+            "OpenRouter is temporarily unavailable. Try again shortly.",
+        )
+    return (
+        "provider_request_failed",
+        f"OpenRouter rejected the request (HTTP {status_code}). Check the model and request settings.",
+    )
+
+
 async def _call_openrouter(
     messages: list[dict[str, str]], model: str, *, json_mode: bool = False
 ) -> tuple[str, dict[str, Any]]:
@@ -195,6 +227,13 @@ async def ask_stream(
     async def events():
         api_key = settings.openrouter_api_key.strip()
         if not api_key or api_key == "your_openrouter_api_key_here":
+            yield _sse_event(
+                "error",
+                {
+                    "code": "missing_api_key",
+                    "message": "OPENROUTER_API_KEY is not configured for this deployment. Add it in Vercel Project Settings → Environment Variables, then redeploy.",
+                },
+            )
             yield _sse_event("complete", _safe_ask_response(selected_model).model_dump())
             return
 
@@ -258,8 +297,31 @@ async def ask_stream(
                 tokens_used=tokens_used,
             )
             yield _sse_event("complete", result.model_dump())
+        except httpx.HTTPStatusError as exc:
+            logger.warning("OpenRouter streaming request failed with HTTP %s", exc.response.status_code)
+            code, message = _provider_error_message(exc.response.status_code)
+            yield _sse_event("error", {"code": code, "message": message})
+            yield _sse_event("complete", _safe_ask_response(selected_model).model_dump())
+        except httpx.TimeoutException:
+            logger.warning("OpenRouter streaming request timed out")
+            yield _sse_event(
+                "error",
+                {"code": "provider_timeout", "message": "OpenRouter timed out. Try again shortly."},
+            )
+            yield _sse_event("complete", _safe_ask_response(selected_model).model_dump())
+        except httpx.HTTPError:
+            logger.exception("OpenRouter streaming connection failed")
+            yield _sse_event(
+                "error",
+                {"code": "provider_connection_failed", "message": "Could not connect to OpenRouter. Try again shortly."},
+            )
+            yield _sse_event("complete", _safe_ask_response(selected_model).model_dump())
         except Exception:
             logger.exception("/ask/stream failed; returning a safe fallback response")
+            yield _sse_event(
+                "error",
+                {"code": "invalid_provider_response", "message": "OpenRouter returned an unreadable response. Check the selected model and try again."},
+            )
             yield _sse_event("complete", _safe_ask_response(selected_model).model_dump())
 
     return StreamingResponse(

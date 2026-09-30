@@ -213,6 +213,7 @@
       const view = makeTurn(question);
       let fullStream = "";
       let completed = null;
+      let diagnostic = null;
       try {
         const params = new URLSearchParams({ question, model });
         const response = await fetch(`/ask/stream?${params}`, { headers: { Accept: "text/event-stream" } });
@@ -238,6 +239,8 @@
               fullStream += payload.text || "";
               const preview = partialAnswer(fullStream);
               if (preview) view.answerText.textContent = preview;
+            } else if (event === "error") {
+              diagnostic = payload;
             } else if (event === "complete") {
               completed = payload;
             }
@@ -246,6 +249,12 @@
         }
         if (!completed) throw new Error("The stream ended without a completed response.");
         showResult(view, completed);
+        if (diagnostic) {
+          const notice = document.createElement("div");
+          notice.className = "error";
+          notice.textContent = `${diagnostic.message} [${diagnostic.code}]`;
+          view.answer.prepend(notice);
+        }
       } catch (error) {
         view.live.remove();
         view.answerText.textContent = "The request could not be completed.";

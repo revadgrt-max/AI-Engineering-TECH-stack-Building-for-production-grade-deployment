@@ -130,6 +130,27 @@ def test_ask_stream_emits_deltas_and_schema_response(monkeypatch) -> None:
     }
 
 
+def test_ask_stream_reports_missing_api_key_safely(monkeypatch) -> None:
+    monkeypatch.setattr(main.settings, "openrouter_api_key", "")
+
+    response = client.get("/ask/stream", params={"question": "Test question"})
+
+    assert response.status_code == 200
+    assert 'event: error\ndata: {"code": "missing_api_key"' in response.text
+    assert "OPENROUTER_API_KEY" in response.text
+    assert "sorry i could not answer that right now" in response.text
+
+
+def test_provider_error_messages_are_actionable() -> None:
+    code, message = main._provider_error_message(401)
+    assert code == "invalid_api_key"
+    assert "Vercel OPENROUTER_API_KEY" in message
+
+    code, message = main._provider_error_message(402)
+    assert code == "insufficient_credits"
+    assert "credits" in message
+
+
 def test_openrouter_retries_transient_response_with_backoff(monkeypatch) -> None:
     monkeypatch.setattr(main.settings, "openrouter_api_key", "test-key")
     attempts = 0
