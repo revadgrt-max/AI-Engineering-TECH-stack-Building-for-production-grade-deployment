@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  streamlit:
+    build: .
+    command: ["streamlit", "run", "streamlit_app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    environment:
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy

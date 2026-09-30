@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+secrets/
+secrets.*
+api_key
+api_key.*
+apikey
+apikey.*
+*.pem
+*.key
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
