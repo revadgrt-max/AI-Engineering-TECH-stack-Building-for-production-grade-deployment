@@ -11,17 +11,3 @@ services:
         sync: false
       - key: OPENROUTER_MODEL
         value: openai/gpt-4o-mini
-
-  - type: web
-    name: openrouter-ui
-    runtime: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    dockerCommand: sh -c 'exec streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port "${PORT:-8501}"'
-    envVars:
-      - key: API_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: openrouter-api
-          property: hostport

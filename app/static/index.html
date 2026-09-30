@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f4ef">
+  <title>FastAPI Ask</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f4ef;
+      --surface: #fff;
+      --ink: #172522;
+      --muted: #65716d;
+      --line: #d9dfd9;
+      --green: #145b49;
+      --green-soft: #e2eee8;
+      --orange: #d5743a;
+      --error: #a43d32;
+      font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink); }
+    button, textarea, input { font: inherit; }
+    a { color: inherit; }
+    .shell { max-width: 1040px; padding: 0 28px; margin: 0 auto; }
+    header { height: 74px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; gap: 11px; align-items: center; font-size: 14px; font-weight: 700; }
+    .mark { display: grid; place-items: center; width: 30px; height: 30px; color: white; background: var(--green); border-radius: 8px; font-family: Georgia, serif; font-size: 17px; }
+    .status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #a7aaa5; }
+    .dot.online { background: #368461; box-shadow: 0 0 0 3px #36846122; }
+    main { padding: 68px 0 88px; }
+    .intro { max-width: 720px; margin: 0 auto 38px; }
+    .eyebrow { color: var(--green); font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 1.3px; }
+    h1 { max-width: 650px; margin: 14px 0 14px; font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: clamp(42px, 7vw, 68px); line-height: 1.02; letter-spacing: 0; }
+    .intro p { max-width: 570px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .workspace { max-width: 720px; margin: auto; }
+    .settings { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; color: var(--muted); font-size: 12px; }
+    .settings input { width: 190px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: #ffffffa8; color: var(--ink); font-size: 12px; }
+    .composer { padding: 17px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 35px #21392e0a; }
+    textarea { display: block; width: 100%; min-height: 102px; resize: vertical; padding: 4px 3px; border: 0; outline: 0; color: var(--ink); font-size: 16px; line-height: 1.55; }
+    textarea::placeholder { color: #87918d; }
+    .composer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 12px; border-top: 1px solid #edf0eb; }
+    .hint { color: #77817c; font-size: 12px; }
+    .submit { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 0 16px; border: 0; border-radius: 7px; background: var(--green); color: white; font-weight: 650; cursor: pointer; transition: background .16s ease, transform .16s ease; }
+    .submit:hover { background: #0f493a; transform: translateY(-1px); }
+    .submit:disabled { opacity: .55; cursor: wait; transform: none; }
+    .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 15px; }
+    .examples-label { margin-right: 2px; color: var(--muted); font-size: 12px; }
+    .example { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: #46534e; font-size: 12px; cursor: pointer; }
+    .example:hover { background: #fff; border-color: #b9c7bf; }
+    #results { display: grid; gap: 16px; margin-top: 30px; }
+    .turn { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); animation: rise .24s ease both; }
+    .question { padding: 16px 19px; border-bottom: 1px solid #e9ede7; background: #fbfcf9; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+    .question-label, .answer-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 1px; }
+    .answer { padding: 19px; }
+    .answer-text { font-family: Georgia, "Times New Roman", serif; font-size: 19px; line-height: 1.55; white-space: pre-wrap; }
+    .live { margin-top: 11px; color: var(--green); font-size: 12px; }
+    .live::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--orange); animation: pulse 1s infinite alternate; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 17px; }
+    .tag { padding: 6px 9px; border-radius: 5px; background: var(--green-soft); color: #34574a; font-size: 11px; }
+    .sources { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid #e9ede7; color: var(--muted); font-size: 12px; }
+    .sources strong { color: var(--ink); }
+    .sources ul { padding-left: 18px; margin-bottom: 0; }
+    .error { padding: 13px 15px; border: 1px solid #efc5bc; border-radius: 8px; background: #fff4f0; color: var(--error); font-size: 13px; }
+    footer { max-width: 720px; margin: 42px auto 0; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.6; }
+    footer a { color: var(--green); }
+    @keyframes pulse { to { opacity: .35; } }
+    @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 600px) {
+      .shell { padding: 0 18px; }
+      header { height: 64px; }
+      main { padding-top: 47px; }
+      .intro { margin-bottom: 27px; }
+      .intro p { font-size: 14px; }
+      .settings { justify-content: space-between; }
+      .settings input { width: min(58vw, 210px); }
+      .composer { padding: 13px; }
+      .composer-bottom { align-items: flex-end; }
+      .hint { max-width: 170px; line-height: 1.4; }
+      .submit { padding: 0 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><span class="mark">A</span><span>OpenRouter · Ask</span></div>
+      <div class="status"><span id="health-dot" class="dot"></span><span id="health-text">Checking API</span></div>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow">A clear answer, one question at a time</div>
+        <h1>Bring your curiosity.</h1>
+        <p>Ask a question and watch the response arrive as it’s generated. Each completed answer includes its model, confidence estimate, token usage, and available sources.</p>
+      </section>
+      <section class="workspace" aria-label="Ask a question">
+        <div class="settings">
+          <label for="model">Model</label>
+          <input id="model" value="openai/gpt-4o-mini" autocomplete="off" aria-label="Model name">
+        </div>
+        <form id="ask-form" class="composer">
+          <textarea id="question" name="question" required maxlength="4000" placeholder="What would you like to understand?" aria-label="Your question"></textarea>
+          <div class="composer-bottom">
+            <span class="hint">Responses stream from the API. Sources appear when retrieval is connected.</span>
+            <button class="submit" id="submit" type="submit"><span>Ask</span><span aria-hidden="true">↗</span></button>
+          </div>
+        </form>
+        <div class="examples" aria-label="Example questions">
+          <span class="examples-label">Try</span>
+          <button class="example" type="button">How does a transformer model work?</button>
+          <button class="example" type="button">Explain prompt engineering simply</button>
+          <button class="example" type="button">What makes an API reliable?</button>
+        </div>
+        <section id="results" aria-live="polite"></section>
+        <footer>
+          Confidence is the model’s self-assessment, not a calibrated probability. Sources are empty until a retrieval source is connected. <a href="/docs">API documentation</a>
+        </footer>
+      </section>
+    </main>
+  </div>
+  <script>
+    const form = document.querySelector("#ask-form");
+    const questionField = document.querySelector("#question");
+    const modelField = document.querySelector("#model");
+    const submitButton = document.querySelector("#submit");
+    const results = document.querySelector("#results");
+
+    function partialAnswer(raw) {
+      const marker = '"answer":"';
+      const start = raw.indexOf(marker);
+      if (start < 0) return "";
+      let escaped = "";
+      for (let index = start + marker.length; index < raw.length; index += 1) {
+        const character = raw[index];
+        if (character === '"' && raw[index - 1] !== "\\") break;
+        escaped += character;
+      }
+      try { return JSON.parse(`"${escaped}"`); } catch { return ""; }
+    }
+
+    function makeTurn(question) {
+      const article = document.createElement("article");
+      article.className = "turn";
+      const prompt = document.createElement("div");
+      prompt.className = "question";
+      const promptLabel = document.createElement("span");
+      promptLabel.className = "question-label";
+      promptLabel.textContent = "Your question";
+      const promptText = document.createElement("div");
+      promptText.textContent = question;
+      prompt.append(promptLabel, promptText);
+
+      const answer = document.createElement("div");
+      answer.className = "answer";
+      const label = document.createElement("span");
+      label.className = "answer-label";
+      label.textContent = "Answer";
+      const answerText = document.createElement("div");
+      answerText.className = "answer-text";
+      answerText.textContent = "Connecting to the answer stream…";
+      const live = document.createElement("div");
+      live.className = "live";
+      live.textContent = "Receiving response";
+      answer.append(label, answerText, live);
+      article.append(prompt, answer);
+      results.prepend(article);
+      return { article, answer, answerText, live };
+    }
+
+    function addTag(parent, text) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = text;
+      parent.append(tag);
+    }
+
+    function showResult(view, data) {
+      view.answerText.textContent = data.answer || "sorry i could not answer that right now";
+      view.live.remove();
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      addTag(meta, `Model · ${data.model || "unknown"}`);
+      addTag(meta, `Confidence · ${Math.round((Number(data.confidence) || 0) * 100)}%`);
+      addTag(meta, `Tokens · ${Number(data.tokens_used) || 0}`);
+      view.answer.append(meta);
+
+      const sources = Array.isArray(data.sources) ? data.sources : [];
+      const sourceBlock = document.createElement("div");
+      sourceBlock.className = "sources";
+      const sourceLabel = document.createElement("strong");
+      sourceLabel.textContent = sources.length ? "Sources" : "Sources · none connected";
+      sourceBlock.append(sourceLabel);
+      if (sources.length) {
+        const list = document.createElement("ul");
+        for (const source of sources) {
+          const item = document.createElement("li");
+          item.textContent = source;
+          list.append(item);
+        }
+        sourceBlock.append(list);
+      }
+      view.answer.append(sourceBlock);
+    }
+
+    async function ask(question, model) {
+      const view = makeTurn(question);
+      let fullStream = "";
+      let completed = null;
+      try {
+        const params = new URLSearchParams({ question, model });
+        const response = await fetch(`/ask/stream?${params}`, { headers: { Accept: "text/event-stream" } });
+        if (!response.ok || !response.body) throw new Error(`API returned ${response.status}`);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+          const frames = buffer.split(/\r?\n\r?\n/);
+          buffer = frames.pop() || "";
+          for (const frame of frames) {
+            let event = "message";
+            const dataLines = [];
+            for (const line of frame.split(/\r?\n/)) {
+              if (line.startsWith("event:")) event = line.slice(6).trim();
+              if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+            }
+            if (!dataLines.length) continue;
+            const payload = JSON.parse(dataLines.join("\n"));
+            if (event === "delta") {
+              fullStream += payload.text || "";
+              const preview = partialAnswer(fullStream);
+              if (preview) view.answerText.textContent = preview;
+            } else if (event === "complete") {
+              completed = payload;
+            }
+          }
+          if (done) break;
+        }
+        if (!completed) throw new Error("The stream ended without a completed response.");
+        showResult(view, completed);
+      } catch (error) {
+        view.live.remove();
+        view.answerText.textContent = "The request could not be completed.";
+        const notice = document.createElement("div");
+        notice.className = "error";
+        notice.textContent = error.message || "Network error. Please try again.";
+        view.answer.append(notice);
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const question = questionField.value.trim();
+      const model = modelField.value.trim() || "openai/gpt-4o-mini";
+      if (!question || submitButton.disabled) return;
+      submitButton.disabled = true;
+      submitButton.querySelector("span").textContent = "Asking";
+      ask(question, model).finally(() => {
+        submitButton.disabled = false;
+        submitButton.querySelector("span").textContent = "Ask";
+      });
+    });
+
+    document.querySelectorAll(".example").forEach((button) => {
+      button.addEventListener("click", () => {
+        questionField.value = button.textContent;
+        questionField.focus();
+      });
+    });
+
+    fetch("/health").then((response) => {
+      if (!response.ok) throw new Error("API unavailable");
+      return response.json();
+    }).then(() => {
+      document.querySelector("#health-dot").classList.add("online");
+      document.querySelector("#health-text").textContent = "API online";
+    }).catch(() => {
+      document.querySelector("#health-text").textContent = "API status unavailable";
+    });
+  </script>
+</body>
+</html>

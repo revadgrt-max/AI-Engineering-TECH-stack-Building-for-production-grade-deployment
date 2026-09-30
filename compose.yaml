@@ -17,14 +17,3 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
-
-  streamlit:
-    build: .
-    command: ["streamlit", "run", "streamlit_app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
-    environment:
-      API_BASE_URL: http://api:8000
-    ports:
-      - "8501:8501"
-    depends_on:
-      api:
-        condition: service_healthy

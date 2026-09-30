@@ -20,9 +20,17 @@ def test_root_returns_api_links() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "FastAPI Ask" in response.text
+    assert 'fetch(`/ask/stream?' in response.text
+
+
+def test_api_info_lists_documentation_route() -> None:
+    response = client.get("/api")
+
+    assert response.status_code == 200
     assert response.json()["docs"] == "/docs"
     assert response.json()["health"] == "/health"
-    assert response.json()["endpoints"]["ask"].startswith("/ask?")
 
 
 def test_ask_returns_schema_response(monkeypatch) -> None:

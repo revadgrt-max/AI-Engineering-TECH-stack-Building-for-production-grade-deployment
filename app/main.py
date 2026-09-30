@@ -1,13 +1,14 @@
 import asyncio
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from starlette.responses import StreamingResponse
+from starlette.responses import FileResponse, StreamingResponse
 
 
 class Settings(BaseSettings):
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
 settings = Settings()
 app = FastAPI(title="OpenRouter API", version="0.1.0")
 logger = logging.getLogger(__name__)
+WEB_PAGE = Path(__file__).parent / "static" / "index.html"
 OPENROUTER_TIMEOUT_SECONDS = 20.0
 OPENROUTER_MAX_RETRIES = 3
 RETRY_BACKOFF_SECONDS = 0.5
@@ -136,7 +138,12 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/")
-async def root() -> dict[str, Any]:
+async def root() -> FileResponse:
+    return FileResponse(WEB_PAGE, media_type="text/html")
+
+
+@app.get("/api")
+async def api_info() -> dict[str, Any]:
     return {
         "service": "OpenRouter API",
         "status": "ok",
