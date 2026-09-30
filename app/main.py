@@ -135,6 +135,20 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/")
+async def root() -> dict[str, Any]:
+    return {
+        "service": "OpenRouter API",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "ask": "/ask?question=Your+question",
+            "stream": "/ask/stream?question=Your+question",
+        },
+    }
+
+
 @app.get("/ask", response_model=AskResponse)
 async def ask(
     question: str = Query(min_length=1),

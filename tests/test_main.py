@@ -16,6 +16,15 @@ def test_health_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_root_returns_api_links() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.json()["docs"] == "/docs"
+    assert response.json()["health"] == "/health"
+    assert response.json()["endpoints"]["ask"].startswith("/ask?")
+
+
 def test_ask_returns_schema_response(monkeypatch) -> None:
     async def fake_openrouter(messages, model, *, json_mode=False):
         assert messages[-1] == {"role": "user", "content": "What is prompt engineering?"}

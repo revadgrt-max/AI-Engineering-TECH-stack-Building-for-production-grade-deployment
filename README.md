@@ -47,6 +47,12 @@ Compose reads `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` from the root `.env` f
 
 Stop the services with `docker compose down`.
 
+## Vercel
+
+Vercel detects the FastAPI application in `app/main.py` and deploys the API as a Vercel Function. The root URL returns API information, and `/docs` opens the API documentation. Add `OPENROUTER_API_KEY` and, optionally, `OPENROUTER_MODEL` under the Vercel project's Environment Variables, then redeploy. Do not commit `.env`.
+
+Vercel does not run this Streamlit UI as a persistent server. Deploy the UI separately with the included Render Blueprint, or replace it with a frontend supported by Vercel.
+
 ## Render
 
 The root `render.yaml` defines separate API and Streamlit web services. Push this project to a Git provider connected to Render, then choose **New + > Blueprint** and select that repository. During Blueprint creation, enter `OPENROUTER_API_KEY` when Render prompts for the secret. Render will assign public `onrender.com` URLs after deployment; the Streamlit service connects to the API over Render's private network.
